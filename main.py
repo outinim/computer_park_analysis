@@ -1,7 +1,5 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
-import time
 import io
 import os
 import base64
@@ -45,7 +43,9 @@ def write_save_result_excel(data, path_to_excel_result="classeur_results.xlsx"):
     df = parse_dataframe_windows7(data)
 
     # save resultst in new excel
-    data.to_excel(path_to_excel_result, sheet_name="Sheet2", float_format="%.0f", index=False)
+    data.to_excel(
+        path_to_excel_result, sheet_name="Sheet2", float_format="%.0f", index=False
+    )
     with pd.ExcelWriter(path_to_excel_result, mode="a", engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Sheet3", float_format="%.0f", index=False)
 
