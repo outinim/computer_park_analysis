@@ -5,22 +5,24 @@ import os
 import base64
 
 
-def to_excel(data):
+def to_excel(data, df_win7):
     output = io.BytesIO()
-    writer = pd.ExcelWriter(output)
+    writer = pd.ExcelWriter(output, engine="openpyxl")
     data.to_excel(writer, sheet_name="Sheet1", index=False)
+    df_win7.to_excel(writer, sheet_name="Sheet2", index=False)
+
     writer.save()
     processed_data = output.getvalue()
 
     return processed_data
 
 
-def get_table_download_link(data):
+def get_table_download_link(data, df_win7):
     """Generates a link allowing the data in a given panda dataframe to be downloaded
     in:  dataframe
     out: href string
     """
-    val = to_excel(data)
+    val = to_excel(data, df_win7)
     b64 = base64.b64encode(val)  # val looks like b'...'
 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="extract.xlsx">Download csv file</a>'  # decode b'abc' => abc
@@ -41,13 +43,6 @@ def parse_dataframe_windows7(data):
 def write_save_result_excel(data, path_to_excel_result="classeur_results.xlsx"):
 
     df = parse_dataframe_windows7(data)
-
-    # save resultst in new excel
-    data.to_excel(
-        path_to_excel_result, sheet_name="Sheet2", float_format="%.0f", index=False
-    )
-    with pd.ExcelWriter(path_to_excel_result, mode="a", engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Sheet3", float_format="%.0f", index=False)
 
     return df
 
@@ -86,7 +81,7 @@ if __name__ == "__main__":
                 st.write(df)
 
                 # st.markdown(get_binary_file_downloader_html("res.xlsx", "classeur excel Windows 7"), unsafe_allow_html=True)
-            st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+            st.markdown(get_table_download_link(data, df), unsafe_allow_html=True)
 
         else:
             st.warning("you need to upload your Excel file (.xlsx)")
