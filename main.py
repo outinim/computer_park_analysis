@@ -63,7 +63,7 @@ def get_binary_file_downloader_html(bin_file, file_label="File"):
 
 if __name__ == "__main__":
 
-    st.title("Boomscud first app 😎")
+    st.title("Boomscud first app to analyse Excel 😎")
 
     # Write DataFrame
     st.write("*Excel du parc informatique*")
