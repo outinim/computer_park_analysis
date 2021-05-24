@@ -3,6 +3,7 @@ import pandas as pd
 import io
 import os
 import base64
+import itertools
 
 
 def to_excel(data, df_win7):
@@ -28,16 +29,26 @@ def get_table_download_link(data, df_win7):
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="extract.xlsx">Download csv file</a>'  # decode b'abc' => abc
 
 
-def parse_dataframe_windows7(data):
+def apply_filter_windows7(data, filters):
 
-    data = data[
-        (data["Objet du partage"].isin(["Caisse", "Comptabilité"]))
-        | (data["Commentaire (Commentaire)"].str.startswith("DDR3", na=False))
-        | (data["Commentaire (Commentaire)"].str.startswith("CAISSE", na=False))
-        | (data["Commentaire (Commentaire)"].str.startswith("PANINI", na=False))
-    ]
+    # build flat filter dictionnary
+    filters_spread = []
+    for col in filters.keys():
+        filters_spread.append(list(itertools.product([col], filters[col])))
 
-    return data
+    flat_filters = [item for sublist in filters_spread for item in sublist]
+
+    # build pandas msk (column startswith ...)
+    msk = []
+    for sublist in flat_filters:
+        col, val = sublist
+        msk.append((data[col].str.startswith(val, na=False)))
+
+    # result
+    final_msk = filter_many_or(msk)
+    df = data[final_msk]
+
+    return df
 
 
 def write_save_result_excel(data, path_to_excel_result="classeur_results.xlsx"):
@@ -47,21 +58,20 @@ def write_save_result_excel(data, path_to_excel_result="classeur_results.xlsx"):
     return df
 
 
-def get_binary_file_downloader_html(bin_file, file_label="File"):
-    with open(bin_file, "rb") as f:
-        data = f.read()
-    bin_str = base64.b64encode(data).decode()
-    href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">Download {file_label}</a>'
+def filter_many_or(list_of_masks):
+    aggregate_mask = list_of_masks[0]
 
-    return href
+    for mask in list_of_masks[1:]:
+        aggregate_mask = aggregate_mask | mask
+
+    return aggregate_mask
 
 
 if __name__ == "__main__":
 
-    st.title("Boomscud first app to analyse Excel 😎")
+    st.title("Analyse excel du parc informatique 😎")
 
-    # Write DataFrame
-    st.write("*Excel du parc informatique*")
+    st.subheader("Drop Excel file")
 
     try:
         uploaded_file = st.file_uploader("Choose a file")
@@ -72,35 +82,52 @@ if __name__ == "__main__":
             st.write("Voila les 10 premieres lignes du parc total")
             st.write(data)
 
+        st.write("\n")
+
         if uploaded_file is not None:
             # read xls or xlsx
-            df = write_save_result_excel(data)
+
+            # Columns to CHOOSE to apply filter
+            cols_filtered = st.multiselect(
+                "Colonnes possibles dans le fichier Excel", list(data.columns), key=0
+            )
+            st.write("Colonnes à filtrer:", cols_filtered)
+
+            # value to choose in columns
+            filters = {}
+            defaults = {
+                "Commentaire (Commentaire)": ["PANINI", "DDR3", "CAISSE"],
+                "Objet du partage": ["Caisse", "Comptabilité"],
+            }
+
+            for col in cols_filtered:
+
+                option = st.multiselect(
+                    f"Valeurs possibles à filtrer dans la colonne : '{col}'",
+                    list(data[col].unique()),
+                    defaults[col],
+                )
+                filters[col] = option
+
+                st.write("You selected:", filters)
+
+            df = apply_filter_windows7(data, filters)
+
+            st.subheader("Result Excel")
+            st.write("\n")
 
             if st.checkbox("Show data windows7"):
                 st.write("Voila les 10 premieres lignes du parc Windows 7")
                 st.write(df)
 
-                # st.markdown(get_binary_file_downloader_html("res.xlsx", "classeur excel Windows 7"), unsafe_allow_html=True)
+            # html link download excel
             st.markdown(get_table_download_link(data, df), unsafe_allow_html=True)
 
         else:
             st.warning("you need to upload your Excel file (.xlsx)")
 
     except:
-        st.warning("you need to upload your Excel file (.xlsx) / or computation failed")
+        st.warning("Computation failed")
 
-    # # Show Progress
-    # "Starting a long computation..."
-    # # Add a placeholder
-    # latest_iteration = st.empty()
-    # bar = st.progress(0)
-
-    # for i in range(100):
-    #     # Update the progress bar with each iteration.
-    #     latest_iteration.text(f"Iteration {i+1}")
-    #     bar.progress(i + 1)
-    #     time.sleep(0.01)
-
-    # "...and now we're done!"
-
-    # Or even better, call Streamlit functions inside a "with" block:
+    # a = st.text_input("Valeurs à filtrer pour la colonne '{col}'")
+    # st.write(a)
