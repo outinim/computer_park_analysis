@@ -89,7 +89,9 @@ if __name__ == "__main__":
 
             # Columns to CHOOSE to apply filter
             cols_filtered = st.multiselect(
-                "Colonnes possibles dans le fichier Excel", list(data.columns), key=0
+                "Colonnes possibles dans le fichier Excel",
+                list(data.columns),
+                ["Objet du partage", "Commentaire (Commentaire)"],
             )
             st.write("Colonnes à filtrer:", cols_filtered)
 
