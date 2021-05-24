@@ -109,7 +109,7 @@ if __name__ == "__main__":
                 )
                 filters[col] = option
 
-                st.write("You selected:", filters)
+                # st.write("You selected:", filters)
 
             df = apply_filter_windows7(data, filters)
 
