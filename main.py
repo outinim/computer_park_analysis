@@ -114,6 +114,7 @@ if __name__ == "__main__":
                 # st.write("You selected:", filters)
 
             df = apply_filter_windows7(data, filters)
+            df = df.reset_index(drop=True)
 
             st.subheader("Result Excel")
             st.write("\n")
