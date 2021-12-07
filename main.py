@@ -69,9 +69,11 @@ def filter_many_or(list_of_masks):
 
 if __name__ == "__main__":
 
-    st.title("Analyse excel du parc informatique CID_30")
+    st.title("Analyse du parc informatique CID_30")
 
     st.subheader("Drop Excel file")
+
+    date = st.date_input("Pick a date")
 
     try:
         uploaded_file = st.file_uploader("Choose a file")
